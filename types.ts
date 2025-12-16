@@ -46,7 +46,7 @@ export interface Theme {
   name: string;
   description: string;
   colors: string[];
-  html: string;
+  html?: string;
   prompt: string;
   example?: {
     slides: Slide[];

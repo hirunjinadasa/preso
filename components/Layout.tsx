@@ -1,6 +1,6 @@
 // File: components/Layout.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { getUserName, getApiKey } from "../services/db";
+import { getUserName } from "../services/db";
 import { ProfileDropdown } from "./ProfileDropdown";
 import logo from "@/assets/logo_transparent.png";
 
@@ -11,7 +11,6 @@ interface LayoutProps {
   title?: string;
   saveDeckTitle: () => void;
   headerActions?: React.ReactNode;
-  onUpgradeClick: () => void;
   isWorking: boolean;
   showToast: () => void;
 }
@@ -23,7 +22,6 @@ export const Layout: React.FC<LayoutProps> = ({
   title,
   saveDeckTitle,
   headerActions,
-  onUpgradeClick,
   isWorking,
   showToast,
 }) => {
@@ -36,9 +34,7 @@ export const Layout: React.FC<LayoutProps> = ({
     const loadUserData = async () => {
       const storedName = await getUserName();
       setUserName(storedName || "Guest");
-
-      const storedApiKey = await getApiKey();
-      setIsUpgraded(!!storedApiKey);
+      setIsUpgraded(true);
     };
 
     loadUserData();
@@ -122,7 +118,6 @@ export const Layout: React.FC<LayoutProps> = ({
                 userName={userName}
                 setUserName={setUserName}
                 isUpgraded={isUpgraded}
-                onUpgradeClick={onUpgradeClick}
               />
             </div>
           </div>

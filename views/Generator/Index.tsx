@@ -4,7 +4,7 @@ import { UpgradeModal } from "../../components/UpgradeModal";
 import { THEMES } from "../../themes";
 import { geminiService } from "../../services/gemini";
 import { readFileContent } from "../../services/fileParser";
-import { getApiKey, saveDeck } from "../../services/db";
+import { saveDeck } from "../../services/db";
 import { Deck, OutlineItem, InputMode, Theme } from "../../types";
 import { POLLINATIONS_PUBLIC_API_KEY } from "../../constants";
 import { parseLiveStream, transformPollinationsURLs, convertQuickChartTags } from "../../services/streamparser";
@@ -19,10 +19,9 @@ import { StepGeneration } from "./StepGeneration";
 interface GeneratorProps {
   onDeckCreated: (deckId: string) => void;
   onCancel: () => void;
-  onUpgrade: () => void;
 }
 
-export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel, onUpgrade }) => {
+export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel }) => {
   // Steps
   const [step, setStep] = useState<"type" | "input" | "processing_outline" | "edit_outline" | "theme_selection" | "generating_slides">("type");
   
@@ -32,6 +31,7 @@ export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel, o
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [numSlides, setNumSlides] = useState(8);
   const [outline, setOutline] = useState<OutlineItem[]>([]);
+  const [notes, setNotes] = useState<string>("");
   
   // Theme State
   const [displayThemes, setDisplayThemes] = useState<Theme[]>(THEMES);
@@ -75,8 +75,9 @@ export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel, o
     }
     if (!textData) return;
     try {
-      const generatedOutline = await geminiService.createOutline(inputMode, textData);
-      setOutline(generatedOutline.slice(0, numSlides));
+      const generatedOutline = await geminiService.createOutline(inputMode, textData, numSlides);
+      setOutline(generatedOutline.outline.slice(0, numSlides));
+      setNotes(generatedOutline.notes);
       setStep("edit_outline");
     } catch (e: any) {
       if (!handleApiError(e)) showToast("Failed to generate outline.");
@@ -84,49 +85,106 @@ export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel, o
     }
   };
 
-  const handleFinalGeneration = async () => {
+// Inside Generator component in Index.tsx
+
+const handleAutoTheme = async () => {
+  setStep("processing_outline"); // Re-use processing UI or create a 'generating_theme' state
+  showToast("Analyzing content for the perfect look...");
+  
+  try {
+    const title = outline[0]?.title || "Presentation";
+    
+    // 1. Call the AI
+    const customTheme = await geminiService.generateAutoTheme(title, outline);
+    
+    // 2. Update the Display Themes list
+    // We add the new AI theme to the FRONT of the list
+    setDisplayThemes([customTheme, ...THEMES]);
+    
+    // 3. Automatically select it
+    setSelectedTheme(customTheme);
+    
+    // 4. Move to Theme Selection step to let user confirm (or generate immediately)
+    setStep("theme_selection");
+    showToast(`Created theme: ${customTheme.name}`);
+    
+  } catch (e) {
+    console.error(e);
+    showToast("Could not auto-generate theme.");
+    setStep("theme_selection");
+  }
+};
+
+const handleFinalGeneration = async () => {
     setStep("generating_slides");
     setGeneratedSlides([]);
     setInProgressSlideHtml("");
+    
     let fullResponse = "";
+    // Keep a local reference to the latest slides to avoid React state closure staleness
+    let finalCompleteSlides: { title: string; content: string }[] = [];
 
     try {
-      const title =  outline[0]?.title.split(/:\s*/).slice(-1)[0] || "Untitled Presentation";
+      const title = outline[0]?.title.split(/:\s*/).slice(-1)[0] || "Untitled Presentation";
+      
       const stream = geminiService.generatePresentationStream(
-        title, outline, selectedTheme, selectedMode, advancedInstructions
+        title, outline, notes, selectedTheme, selectedMode, advancedInstructions
       );
 
       for await (const chunk of stream) {
         fullResponse += chunk;
+        
+        // Parse the stream as it arrives (this handles the concatenated JSONs)
         const { completeSlides, inProgressHtml } = parseLiveStream(fullResponse);
+        
+        // Update UI
         setGeneratedSlides(completeSlides);
         setInProgressSlideHtml(inProgressHtml);
+        
+        // Update local reference for the final save step
+        finalCompleteSlides = completeSlides;
       }
 
-      const clean = fullResponse.trim().replace(/^```json/, "").replace(/```$/, "").replace(/^```/, "");
-      const transformedJSON = convertQuickChartTags(
-        transformPollinationsURLs(clean, POLLINATIONS_PUBLIC_API_KEY || "")
-      );
-
-      const parsedJson = JSON.parse(transformedJSON);
-      const finalGeneratedSlides = parsedJson.slides;
+      // --- FIX STARTS HERE ---
+      
+      // We do NOT parse 'fullResponse' again using JSON.parse().
+      // Instead, we take the slides we successfully parsed during streaming
+      // and apply the final transformations (Pollinations/Charts) to each slide.
+      
+      const finalSlidesWithTransforms = finalCompleteSlides.map(slide => {
+        let content = slide.content;
+        
+        // 1. Transform Pollinations URLs (add API key)
+        content = transformPollinationsURLs(content, POLLINATIONS_PUBLIC_API_KEY || "");
+        
+        // 2. Convert <quickchart> tags to <img>
+        content = convertQuickChartTags(content);
+        
+        return {
+          ...slide,
+          content
+        };
+      });
 
       const newDeck: Deck = {
         id: crypto.randomUUID(),
         title: title,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        slides: finalGeneratedSlides.map((s: any) => ({
+        slides: finalSlidesWithTransforms.map((s) => ({
           id: crypto.randomUUID(),
           title: s.title,
           content: s.content,
         })),
         theme: selectedTheme.id,
       };
+
       await saveDeck(newDeck);
       onDeckCreated(newDeck.id);
+      
     } catch (e: any) {
       if (!handleApiError(e)) showToast("Error generating presentation.");
+      // If it fails, we go back to theme selection
       setStep("theme_selection");
     }
   };
@@ -136,7 +194,6 @@ export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel, o
       <UpgradeModal
         isOpen={isRateLimitModalOpen}
         onClose={() => setIsRateLimitModalOpen(false)}
-        onUpgradeClick={() => { setIsRateLimitModalOpen(false); onUpgrade(); }}
       />
 
       {toast && (
@@ -174,7 +231,8 @@ export const Generator: React.FC<GeneratorProps> = ({ onDeckCreated, onCancel, o
         <StepOutline
           outline={outline}
           setOutline={setOutline}
-          onNext={() => setStep("theme_selection")}
+          setNotes={setNotes}
+          onNext={async () => {  await handleAutoTheme(); setStep("theme_selection")}}
           handleApiError={handleApiError}
           showToast={showToast}
         />

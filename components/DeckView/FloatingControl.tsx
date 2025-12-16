@@ -22,7 +22,7 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
 
   return (
     <>
-      <div className="absolute bottom-6 ml-24 left-1/2 -translate-x-1/2 bg-white/90 p-1 rounded-full shadow-2xl border border-slate-200 flex items-center gap-1 z-[9999]">
+      <div className="fixed bottom-8 ml-24 left-1/2 -translate-x-1/2 bg-white/90 p-1 rounded-full shadow-2xl border border-slate-200 flex items-center gap-1 z-[9999]">
         <button onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ZoomOut size={16} /></button>
         <span className="text-xs font-mono font-bold text-slate-400 w-8 text-center">{Math.round(zoom * 100)}</span>
         <button onClick={() => setZoom((z) => Math.min(2.5, z + 0.1))} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ZoomIn size={16} /></button>
@@ -46,7 +46,7 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
       </div>
 
       {isGlobalEditOpen && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-80 bg-white rounded-2xl shadow-2xl p-4 ui-layer animate-in slide-in-from-right fade-in border border-slate-100 z-[9999]">
+        <div className="fixed bottom-20 ml-24 left-1/2 -translate-x-1/2 w-80 bg-white rounded-2xl shadow-2xl p-4 ui-layer animate-in slide-in-from-right fade-in border border-slate-100 z-[9999]">
           <div className="flex justify-between font-bold text-xs uppercase text-slate-400 mb-3 tracking-wider">
             Page Instructions <X size={14} className="cursor-pointer hover:text-red-500" onClick={() => setIsGlobalEditOpen(false)} />
           </div>
@@ -71,6 +71,11 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
           </Button>
         </div>
       )}
+          <div className="fixed ml-[-1.5rem] left-1/2  bottom-0 flex justify-center p-2 items-center">
+            <p className="text-xs text-slate-600">
+              AI can make mistakes. Check important info
+            </p>
+          </div>
     </>
   );
 };

@@ -10,6 +10,7 @@ interface StepOutlineProps {
   onNext: () => void;
   handleApiError: (error: any) => boolean;
   showToast: (msg: string) => void;
+  setNotes: (notes: string) => void;
 }
 
 export const StepOutline: React.FC<StepOutlineProps> = ({ 
@@ -17,7 +18,8 @@ export const StepOutline: React.FC<StepOutlineProps> = ({
   setOutline, 
   onNext, 
   handleApiError, 
-  showToast 
+  showToast,
+  setNotes
 }) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);

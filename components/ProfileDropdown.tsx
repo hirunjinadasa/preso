@@ -10,7 +10,6 @@ interface ProfileDropdownProps {
   userName: string;
   setUserName: (name: string) => void;
   isUpgraded: boolean;
-  onUpgradeClick: () => void;
 }
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
@@ -19,7 +18,6 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   userName,
   setUserName,
   isUpgraded,
-  onUpgradeClick
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editableName, setEditableName] = useState(userName);
@@ -111,8 +109,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       <div className="space-y-3">
         {/* Upgrade Status Section */}
         <div 
-          className={`bg-slate-50 border border-slate-200/80 rounded-lg p-3 flex items-center justify-between gap-3 ${isUpgraded ? 'cursor-pointer hover:bg-slate-100 transition-colors' : ''}`} 
-          onClick={isUpgraded ? onUpgradeClick : undefined}
+          className={`bg-slate-50 border border-slate-200/80 rounded-lg p-3 flex items-center justify-between gap-3 ${isUpgraded ? 'hover:bg-slate-100 transition-colors' : ''}`} 
         >
           <div className="flex items-center gap-3">
             <div
@@ -133,9 +130,6 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               </p>
             </div>
           </div>
-          {!isUpgraded && (
-              <Button size="sm" onClick={onUpgradeClick}>Upgrade</Button>
-          )}
         </div>
         
         {/* Reset Button */}

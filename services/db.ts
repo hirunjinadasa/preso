@@ -32,17 +32,6 @@ export const saveApiKey = async (key: string): Promise<void> => {
   });
 };
 
-export const getApiKey = async (): Promise<string | null> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_SETTINGS, 'readonly');
-    const store = tx.objectStore(STORE_SETTINGS);
-    const request = store.get('api_key');
-    request.onsuccess = () => resolve(request.result ? request.result.value : null);
-    request.onerror = () => reject(request.error);
-  });
-};
-
 export const saveDeck = async (deck: Deck): Promise<void> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {

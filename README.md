@@ -58,8 +58,7 @@ Preso is a high-fidelity, AI-driven presentation platform that allows users to t
 ### Prerequisites
 
 - Node.js (v18+)
-- A Google AI Studio API Key -> [Get it here](https://aistudio.google.com/app/apikey)
-- A Pollinations AI API Key (for images) -> [Get it here](https://enter.pollinations.ai/)
+- A Google AI Studio API Key ([Get it here](https://aistudio.google.com/app/apikey))
 
 ### Installation
 
@@ -77,8 +76,8 @@ Preso is a high-fidelity, AI-driven presentation platform that allows users to t
 3. **Environment Setup**
    Create a `.env` file in the root directory:
    ```env
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
-   VITE_POLLINATIONS_PUBLIC_API_KEY=your_pollinations_api_key_here
+   VITE_GEMINI_API_KEY=your_api_key_here
+   VITE_POLLINATIONS_PUBLIC_API_KEY=optional_key
    ```
 
 4. **Launch Development Server**

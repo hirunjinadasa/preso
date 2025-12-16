@@ -4,7 +4,6 @@ import { Layout } from "./components/Layout";
 import { Dashboard } from "./views/Dashboard";
 import { Generator } from "./views/Generator/Index";
 import { DeckView } from "./views/DeckView";
-import { Upgrade } from "./views/Upgrade";
 import { Button } from "./components/Button";
 import { ExportMenu } from "./components/ExportMenu";
 import { Deck } from "./types";
@@ -12,7 +11,7 @@ import { saveDeck } from "./services/db";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "create" | "deck" | "upgrade"
+    "dashboard" | "create" | "deck"
   >("dashboard");
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null);
   const [deckTitle, setDeckTitle] = useState("");
@@ -37,12 +36,6 @@ const App: React.FC = () => {
   const handleOpenDeck = (deckId: string) => {
     setActiveDeckId(deckId);
     setCurrentView("deck");
-  };
-
-  const handleUpgrade = () => {
-    setCurrentView("upgrade");
-    setActiveDeckId(null);
-    setDeckTitle("");
   };
 
   const handleGoHome = () => {
@@ -115,14 +108,12 @@ const App: React.FC = () => {
           {toast}
         </div>
       )}
-      {currentView !== "upgrade" ? (
         <Layout
           onGoHome={handleGoHome}
           currentView={currentView}
           title={currentView === "deck" ? deckTitle : undefined}
           saveDeckTitle={saveDeckTitle}
           headerActions={currentView === "deck" ? deckActions : undefined}
-          onUpgradeClick={handleUpgrade}
           isWorking={isWorking}
           showToast={showToast}
         >
@@ -137,7 +128,6 @@ const App: React.FC = () => {
             <Generator
               onDeckCreated={handleDeckCreated}
               onCancel={handleGoHome}
-              onUpgrade={handleUpgrade}
             />
           )}
 
@@ -153,16 +143,12 @@ const App: React.FC = () => {
               setDeck={setDeck}
               isPresentationMode={isPresentationMode}
               setIsPresentationMode={setIsPresentationMode}
-              onUpgrade={handleUpgrade}
               isWorking={isWorking}
               setIsWorking={setIsWorking}
               showToast={showToast}
             />
           )}
         </Layout>
-      ) : (
-        <Upgrade onGoBack={handleGoHome} />
-      )}
       {isExportMenuOpen && deck && (
         <ExportMenu
           deck={deck}

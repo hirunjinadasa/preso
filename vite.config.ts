@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       define: {
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.POLLINATIONS_PUBLIC_API_KEY': JSON.stringify(env.VITE_POLLINATIONS_PUBLIC_API_KEY)
+        'process.env.POLLINATIONS_PUBLIC_API_KEY': JSON.stringify(env.VITE_POLLINATIONS_PUBLIC_API_KEY),
+        'process.env.PEXELS_API_KEY': JSON.stringify(env.VITE_PEXELS_API_KEY)
       },
       resolve: {
         alias: {

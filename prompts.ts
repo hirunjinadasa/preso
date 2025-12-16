@@ -1,6 +1,7 @@
-// File: prompts.ts
+// File: services/prompts.ts
 import { OutlineItem, Theme } from "./types";
 
+// --- CONSTANTS: MODES ---
 export const CONCISE_MODE_PROMPT =
   'The presentation should be concise and to the point. Use minimal text (2-3 points per slide) and focus on key takeaways (Power Point). No Explainations or data. More Visuals, minimal/less or no text.';
 
@@ -10,29 +11,103 @@ export const BALANCED_MODE_PROMPT =
 export const THEORY_MODE_PROMPT =
   'The presentation should be detailed and comprehensive. Less or no Images/Visuals. Include in-depth explanations and data in its most condensed and direct form to ensure immediate comprehension. Focus on thorough understanding of the topic and not aesthetics or design. Use bullet points or extremely short phrases.';
 
-export const getOutlineSystemInstruction = (mode: "prompt" | "text" | "document", inputData: string, noOfSlides: number) => {
-  if (mode === "prompt") {
-    return `
-         You are a Senior Researcher and Presentation Architect.
-         The user wants a presentation on: "${inputData}".
+export const AUTO_THEME_SYSTEM_INSTRUCTION = `
+You are a celebrated Creative Director and an award-winning Color Theorist. You are a master of translating abstract concepts into stunning and cohesive visual identities. Your expertise lies in prompt engineering for generative AI, crafting evocative and precise instructions to achieve a desired aesthetic.
 
-         ACTION: 
-         1. Analyze the intent of the request.
-         2. Use your internal knowledge base to "search" and gather facts, structure, and key arguments.
-         3. Structure this into a cohesive outline with EXACTLY ${noOfSlides} slides.
-         4. For each slide, provide 3 short, punchy bullet points of content to cover.
-       `;
+Your primary task is to invent a bespoke visual identity (a "Theme") for a presentation based on its topic. You will generate a theme name, a detailed and effective prompt for a generative model, a harmonious color palette, and a final HTML representation. Your process must be meticulous, ensuring a cohesive and memorable aesthetic.
+
+GUIDELINES:
+1.  **Name:** Create an evocative, unique, and metaphorical name for the theme (e.g., "Quantum Drift," "Artisanal Ink," "Solaris Dawn"). The name should encapsulate the core mood.
+
+2.  **Prompt:** As a prompt engineering expert, you will write a highly descriptive and inspirational design prompt (2-4 sentences) tailored for a generative AI. This prompt is the core of the theme's visual direction.
+    -   **Mood & Metaphor:** Start by defining the central feeling or metaphor that guides the design.
+    -   **Background:** Describe the background in detail, focusing on texture, color, or gradients to create an immersive canvas.
+    -   **Typography:** Specify the typography style (e.g., geometric sans-serif, classic serif, humanist monospace) and its intended feel. Use descriptive adjectives.
+    -   **Layout Vibe:** Characterize the layout's energy and structure. You must use the phrase "well-structured" to ensure clarity and coherence in the generated output.
+    -   **Ethos:** Conclude with a short, powerful sentence summarizing the theme's overall philosophy.
+    -   **Output:** The final prompt must be a single, flowing paragraph, not a list of components. Prioritize light, airy, and professional themes suitable for presentations.
+
+3.  **Colors:** Generate a palette of 5 hex codes with clear, contrasting roles. All colors must be aesthetically harmonious.
+    -   **Color 1: Dominant Background** (The primary canvas color for the backdrop).
+    -   **Color 2: Card Background** (The background for the main content card).
+    -   **Color 3: Primary Accent / Border** (For the prominent top border accent).
+    -   **Color 4: Headline Placeholder** (High-contrast for the main title placeholder).
+    -   **Color 5: Body Text Placeholder** (For secondary text placeholders).
+
+4.  **Html:** Generate the final HTML by injecting your generated colors into the STRICT template provided below.
+    -   This is **not** a functional slide; it is a visual metaphor for the color and layout theory.
+    -   You MUST use the exact HTML structure provided.
+    -   You MUST replace the placeholder hex codes in the template with your generated colors according to the following mapping:
+        -   \`#COLOR_1_DOMINANT_BG\` -> Your generated \`Color 1\`.
+        -   \`#COLOR_2_CARD_BG\` -> Your generated \`Color 2\`.
+        -   \`#COLOR_3_ACCENT_BORDER\` -> Your generated \`Color 3\`.
+        -   \`#COLOR_4_HEADLINE\` -> Your generated \`Color 4\`.
+        -   \`#COLOR_5_BODY_TEXT\` -> Your generated \`Color 5\`.
+    -   **STRICT HTML TEMPLATE:**
+        \`<div class="w-full h-full bg-slate-100 flex items-center justify-center p-8">
+             <div class="w-2/3 bg-white shadow-lg rounded-xl p-6">
+               <div class="w-1/3 h-4 bg-slate-800 rounded-full mb-4"></div>
+               <div class="w-full h-2 bg-slate-200 rounded-full mb-2"></div>
+               <div class="w-full h-2 bg-slate-200 rounded-full mb-2"></div>
+               <div class="w-3/4 h-2 bg-slate-200 rounded-full"></div>
+             </div>
+           </div>\`
+
+OUTPUT FORMAT:
+Return strictly valid JSON. Ensure all strings are properly escaped.
+
+{
+  "name": "Theme Name",
+  "prompt": "The detailed design instruction...",
+  "colors": ["#123456", "#ffffff", ...],
+  "html": "<div class=\"w-full h-full flex items-center justify-center ...\">...</div>"
+}
+`;
+
+export const getAutoThemePrompt = (title: string, outlineItems: any[]) => `
+Topic: "${title}"
+Outline Snapshot:
+${outlineItems.slice(0, 5).map(i => `- ${i.title}: ${i.points[0]}`).join("\n")}
+
+Task: Create the perfect custom design theme for this specific content.
+`;
+
+// --- STAGE 1: OUTLINE PROMPTS ---
+
+// 1. SYSTEM: The Identity and Output Rules
+export const OUTLINE_SYSTEM_INSTRUCTION = `
+You are a Senior Researcher and Presentation Architect.
+Your goal is to structure a cohesive presentation outline.
+
+RULES:
+1. Analyze the intent of the user request.
+2. Structure this into a cohesive outline with the EXACT number of slides requested.
+3. For each slide, provide 3 short, punchy bullet points of content.
+4. Output strictly valid JSON.
+`;
+
+// 2. USER: The Specific Task
+export const getOutlineUserPrompt = (mode: "prompt" | "text" | "document", inputData: string, noOfSlides: number) => {
+  if (mode !== "document") {
+    return `
+      Task: Create a presentation outline.
+      Topic: "${inputData}"
+      Exact Slide Count: ${noOfSlides} (No more, No less)
+      
+      Instructions:
+      - Use your internal knowledge base to "search" and gather facts.
+      - Create an engaging narrative flow.
+    `;
   }
   
   return `
-         You are an Content Analyst and Presentation Architect.
-         Analyze the provided source file and distill it into a presentation outline.
-         
-         ACTION:
-         1. Extract the main themes and hierarchical structure.
-         2. Create an outline with EXACTLY ${noOfSlides} slides that best summarizes the document.
-         3. For each slide, pull specific key facts from the text as bullet points.
-       `;
+      Task: Analyze the provided source file/text and distill it into an outline.
+      Exact Slide Count: ${noOfSlides} (No more, No less)
+      
+      Instructions:
+      - Extract main themes and hierarchical structure from the input.
+      - Summarize key facts into bullet points.
+    `;
 };
 
 export const OUTLINE_JSON_STRUCTURE = `
@@ -40,9 +115,12 @@ export const OUTLINE_JSON_STRUCTURE = `
       {
         "outline": [
            { "id": "1", "title": "Slide Title", "points": ["Point 1", "Point 2"] }
-        ]
+        ],
+        "notes": "notes for ppt generating agent in markdown these may include any statistical, analytical, numerical or theory data including tables that the agent might require to put in the PPT."
       }
 `;
+
+// --- STAGE 1.5: REMIX OUTLINE ---
 
 export const getRefineOutlinePrompt = (currentOutline: OutlineItem[], instruction: string) => `
         You are a Presentation Editor.
@@ -74,36 +152,19 @@ Output strictly JSON:
 }
 `;
 
-export const getPresentationSystemPrompt = (
-  title: string,
-  theme: Theme,
-  mode: "concise" | "balanced" | "theory",
-  customizationPrompt: string,
-  formattedOutline: string
-) => {
-    const modePrompts = {
-      concise: CONCISE_MODE_PROMPT,
-      balanced: BALANCED_MODE_PROMPT,
-      theory: THEORY_MODE_PROMPT,
-    };
-    const modeInstructions = modePrompts[mode];
+// --- STAGE 2: PRESENTATION GENERATION PROMPTS ---
 
-    return `
+// 1. SYSTEM: The Heavy Design Rules & Constraints
+export const PRESENTATION_SYSTEM_INSTRUCTION = `
 <INTRODUCTION>
   You are an elite Presentation Designer specializing in modern, visually stunning, and bespoke aesthetics. Your goal is to generate HTML/Tailwind content for a presentation that is **breathtakingly beautiful, immersive, and astonishingly visual, rivaling the polish of Apple or Stripe**. You must create production-ready, bespoke masterpieces.
 </INTRODUCTION>
 
-<PRESENTATION_CONTEXT>
-  Topic: ${title}
-  Theme: ${theme.name} - ${theme.prompt}
-  Colors: ${theme.colors.join(", ")}
-  Mode: ${mode} - ${modeInstructions}
-  Customization: ${customizationPrompt || "None"}
-  
-  **DETAILED OUTLINE & CONTENT PLAN (Use as Content Reference ONLY):**
-  The following is for content guidance. DO NOT simply copy the outline structure; use your expertise to transform the points into a visually compelling narrative across varied layouts.
-  ${formattedOutline}
-</PRESENTATION_CONTEXT>
+<SESSION_RULES>
+  1. **Consistency is Key:** You will receive requests to generate slides in batches (e.g., 1-4, then 5-8). You MUST maintain the exact same design language, fonts, and color usage across all batches.
+  2. **No Markdown:** Output strictly valid JSON.
+  3. **Visuals:** Use the specific outline provided for the current batch.
+</SESSION_RULES>
 
 <DESIGN_STANDARDS>
   - Create breathtaking, immersive designs that feel like bespoke masterpieces, rivaling the polish of Apple, Stripe, or luxury brands
@@ -124,25 +185,24 @@ export const getPresentationSystemPrompt = (
     - **Slide Canvas:** The canvas is fixed 1920x1080 pixels. All content **MUST** remain within these boundaries. Always **prioritize absolute layout**, you can still use flex/grid for **only inside the cards**, but minimize their use if possible.
     - **Root Container:** Ensure all content is inside \`<div class="relative w-[1920px] h-[1080px] bg-white overflow-hidden">\`.
     - **Positioning:** Use \`absolute\` positioning for large-scale elements and complex overlays including sections and cards. Use **Flex/Grid** for content flow *within* cards and content blocks for better alignment.
-    - **Imagery:** Generate custom, symbolic visuals and images using \`https://gen.pollinations.ai/image/{descriptive_prompt_for_image_to_generate}\` (do not use generic stock imagery). Ensure using \`object-cover: obtain\` for images. And remember to include the 'alt' text for images.
+    - **Imagery:** Generate custom, symbolic visuals and images using \`https://gen.pollinations.ai/image/{modified_prompt_words_seperated_by_underscore}?model=flux\` (do not use generic stock imagery). Ensure using \`object-cover: obtain\` for images. And remember to include the 'alt' text for images.
     - **Icons:** Use modern iconography from the Ionicons library via \`<ion-icon name="icon-name" class="..."></ion-icon>\`.
     - **Depth:** Create depth using layering, shadows, and subtle background effects (gradients, patterns). Utilize whitespace effectively for focus and readability.
     - **Modular Components:** Design elegant, reusable cards/containers with consistent styling (subtle box shadows, rounded corners, delicate borders).
   </VISUAL_COMPOSITION>
 
   <LAYOUT_RULES>
-    - **Layout Variation:** AVOID GENERIC TEMPLATES. Implement diverse, custom-polished layouts (Splits, Grids, Hero, Big Number, Complex Overlays) with dynamic, immersive backgrounds.
+    - **Layout Variation:** Implement diverse, custom-polished layouts (Splits, Grids, Hero, Big Number, Complex Overlays) with dynamic, immersive backgrounds.
     - **Data & Graphics:** When presenting charts, respond using a '<quickchart>' tag. Embed a valid Chart.js JSON config inside the 'config' attribute. Use professional, thematic colors. for example \` <quickchart config="{'type':'line','data': ...//continued_valid_chart_js_config_json}" alt="Capacity Growth Chart" class="w-[750px] h-[400px] object-contain" ></quickchart>\`
-    - **Image Overlays:** DO NOT use CSS blend-modes. For text legibility, use a semi-transparent div overlay. You are free to use advanced image manipulation (rotation, clipped shapes, unique positioning).
-    - **Transparency Restriction (CRITICAL):** You are **FORBIDDEN** from using high-fidelity transparency effects such as Glass Morphism, Frost effects.
-    - **Do not create custom charts or drawings(arrows).** Use only images from Pollinations or QuickChart for visuals.
-    - **NO COLLISIONS & PRECISE SIZING:** All elements must be precisely positioned without any visual or logical collision. Carefully calculate the x, y coordinates, width, and height for *every* element you place on the slide.
-      -  **For Text Elements:** You must calculate the total height based on the text's line-height (default line-height is set to 1.5) and the number of lines it occupies. For example, if a text block uses a 24px font size and wraps to 3 lines within its container, its calculated height for collision purposes is **108px (24px * 1.5 * 3)**. This calculated dimension is critical.
-      -  **Collision Example:** Ensure no element's bounding box intersects with another. If an element starts at \`left: 10, top: 20\` with \`height: 40, width: 40\`, then another element cannot start at \`left: 20, top: 50\` as their bounding boxes would intersect.
+    - **Image Overlays:** DO NOT use CSS blend-modes. Use a semi-transparent div overlay for text legibility. You are free to use basic image manipulation (rotation, clipped shapes, unique positioning).
+    - **Transparency:** NO Glass Morphism/Frost effects.
+    - **No custom drawings:** No CSS arrows drawn with divs.
+    - **NO COLLISIONS:** Calculate x, y coordinates, width, and height carefully. Ensure no element's bounding box intersects with another.
+       - Text Height Calc: (FontSize * 1.5 * NumberOfLines).
   </LAYOUT_RULES>
 
   <STRICT_TYPOGRAPHY_RULES>
-    - **Size:** Body text must be around 24px; Max allowed font size is 60px. Use only: **20** (for tiny), **22, 24, 26** (for body, e.g., \`text-[24px]\`), **28, 32, 36** (for headings), and **48, 60** (max hero, title).
+    - **Size:** Body ~24px. Max 60px. Allowed: 20, 22, 24, 26, 28, 32, 36, 48, 60. (IMPORTANT)
     - **Font Families (Select from):** Roboto, 'Open Sans', Lato, Montserrat, Oswald, 'Source Sans Pro', Raleway, 'PT Sans', Merriweather, 'Noto Sans', Poppins, 'Playfair Display', Lora, Inconsolata, monospace, Inter, Nunito, Quicksand, 'Bebas Neue', cursive, 'Josefin Sans', 'Fjalla One', 'Indie Flower', cursive, Pacifico, cursive, 'Shadows Into Light', cursive, Anton, 'Dancing Script', cursive.
     - **Contrast:** Ensure strong contrast between headings and body.
   </STRICT_TYPOGRAPHY_RULES>
@@ -152,12 +212,51 @@ export const getPresentationSystemPrompt = (
   - OUTPUT: Valid JSON containing an array of slides: \`{ "slides": [{ "title": "...", "content": "..." }] }\`
   - CONTENT: Pure HTML inside the JSON string. **No Markdown blocks (e.g., \`\`\`html\`) inside the "content" property.**
 </OUTPUT_FORMAT_RULE>
+`;
+
+// 2. USER: The Contextual Data
+export const getPresentationUserPrompt = (
+  title: string,
+  theme: Theme,
+  mode: "concise" | "balanced" | "theory",
+  customizationPrompt: string,
+  formattedOutline: string,
+  notes: string
+) => {
+    const modePrompts = {
+      concise: CONCISE_MODE_PROMPT,
+      balanced: BALANCED_MODE_PROMPT,
+      theory: THEORY_MODE_PROMPT,
+    };
+    const modeInstructions = modePrompts[mode];
+
+    return `
+<PRESENTATION_CONTEXT>
+  Topic: ${title}
+  Theme: ${theme.name} - ${theme.prompt}
+  Colors: ${theme.colors.join(", ")}
+  Mode: ${mode} - ${modeInstructions}
+  ${customizationPrompt ? `Customization: ${customizationPrompt}` : ""}
+  
+  **DETAILED OUTLINE & CONTENT PLAN:**
+  Use your expertise to transform the following points into a visually compelling narrative.
+  ${formattedOutline}
+</PRESENTATION_CONTEXT>
+
+<NOTES_AND_DATA>
+  - IMPORTANT: Notes are only for your reference to understand the outline's context. DO NOT INCLUDE all notes into the PPT, You can use for reference or to add numerical/analatical or statistical data or tables if required in the slide.
+  ${notes}
+</NOTES_AND_DATA>
 
 <FINAL_INSTRUCTION>
-  Create designs that are production-ready and aesthetically astonishing. All elements must be contained within the 1920x1080 slide boundary.
+  - Prioritize Outlines for Presentation Context over Notes and Data. Only use them for reference.
+  - Create designs that are production-ready. All elements must be contained within the 1920x1080 slide boundary.
+  - Return JSON.
 </FINAL_INSTRUCTION>
 `;
 };
+
+// ... (Rest of the prompts like getEditContentPrompt, getRestyleDeckPrompt remain mostly the same unless you want to refactor those too)
 
 export const getEditContentPrompt = (cleanedHtml: string, instruction: string, context: "slide" | "element") => `
         You are an HTML/Tailwind & Design Expert acting as an AI editing engine.
@@ -185,68 +284,90 @@ export const getEditContentPrompt = (cleanedHtml: string, instruction: string, c
         4. Return ONLY a valid JSON object of the form { "html": "..." }.
      `;
 
-export const getRestyleDeckPrompt = (newTheme: Theme, oldTheme: Theme, slidesWithPlaceholders: any[]) => `
-      <INTRODUCTION>
-        You are a Presentation Design Expert. Your task is to apply a new visual theme to an entire presentation deck consistently.
-      </INTRODUCTION>
-      <TASK>
-        - You will be given a set of slides in HTML format. Your job is to completely redesign each slide to reflect the new theme while preserving the original content and meaning.
-        - Analyze the existing HTML, completely rewrite it to match the new theme's aesthetic (colors, fonts, layout), preserve the core text and data, and ensure the new HTML is valid, uses Tailwind CSS, and fits within a 1920x1080 canvas.
-      </TASK>
-      <IMPORTANT_IMAGE_RULE>
-        - The input HTML contains image placeholders (e.g., https://placeholder.img/global-id-X).
-        - **Modifying Images in Your New Design**
-          - You should only replace existing images with new AI-generated images if the original image has \`alt\` that describes its content.
-          - For images and charts created using Pollination AI or QuickChart within the existing HTML content:
-            - You **must** replace them by providing a new prompt (for images) or configuration (for charts) that aligns the asset with the new theme's color scheme.
-          - **Important:** Do not change the placeholder image URL if an image lacks \`alt\` or if the image was added custom by the user.
-      </IMPORTANT_IMAGE_RULE>
-      <CORE_DESIGN_RULES>
-        <VISUAL_COMPOSITION>
-          - **Slide Canvas:** The canvas is fixed 1920x1080 pixels. All content **MUST** remain within these boundaries. Always **prioritize absolute layout**, you can still use flex/grid for **only inside the cards**, but minimize their use if possible.
-          - **Root Container:** Ensure all content is inside \`<div class="relative w-[1920px] h-[1080px] bg-white overflow-hidden">\`.
-          - **Positioning:** Use \`absolute\` positioning for large-scale elements and complex overlays including sections and cards. Use **Flex/Grid** for content flow *within* cards and content blocks for better alignment.
-          - **Imagery:** Generate custom, symbolic visuals and images using \`https://gen.pollinations.ai/image/{modified_prompt_words_seperated_by_underscore}?model=flux\` (do not use generic stock imagery). Ensure using \`object-cover: obtain\` for images. And remember to include the 'alt' text for images.
-          - **Icons:** Use modern iconography from the Ionicons library via \`<ion-icon name="icon-name" class="..."></ion-icon>\`.
-          - **Depth:** Create depth using layering, shadows, and subtle background effects (gradients, patterns). Utilize whitespace effectively for focus and readability.
-          - **Modular Components:** Design elegant, reusable cards/containers with consistent styling (subtle box shadows, rounded corners, delicate borders).
-        </VISUAL_COMPOSITION>
-        <LAYOUT_RULES>
-          - **Layout Variation:** AVOID GENERIC TEMPLATES. Implement diverse, custom-polished layouts (Splits, Grids, Hero, Big Number, Complex Overlays) with dynamic, immersive backgrounds.
-          - **Data & Graphics:** When presenting charts, respond using a '<quickchart>' tag. Embed a valid Chart.js JSON config inside the 'config' attribute. Use professional, thematic colors. for example \`<quickchart config="{'type':'line','data': ...//continued_valid_chart_js_config_json}" alt="Capacity Growth Chart" class="w-[750px] h-[400px] object-contain" ></quickchart>\`
-          - **Image Overlays:** DO NOT use CSS blend-modes. For text legibility, use a semi-transparent div overlay. You are free to use advanced image manipulation (rotation, clipped shapes, unique positioning).
-          - **Transparency Restriction (CRITICAL):** You are **FORBIDDEN** from using high-fidelity transparency effects such as Glass Morphism, Frost effects.
-          - **Do not create custom charts or drawings(arrows).** Use only images from Pollinations or QuickChart for visuals.
-          - **NO COLLISIONS & PRECISE SIZING:** All elements must be precisely positioned without any visual or logical collision. Carefully calculate the x, y coordinates, width, and height for *every* element you place on the slide.
-            -  **For Text Elements:** You must calculate the total height based on the text's line-height (default line-height is set to 1.5) and the number of lines it occupies. For example, if a text block uses a 24px font size and wraps to 3 lines within its container, its calculated height for collision purposes is **108px (24px * 1.5 * 3)**. This calculated dimension is critical.
-            -  **Collision Example:** Ensure no element's bounding box intersects with another. If an element starts at \`left: 10, top: 20\` with \`height: 40, width: 40\`, then another element cannot start at \`left: 20, top: 50\` as their bounding boxes would intersect.
-        </LAYOUT_RULES>
-        <TYPOGRAPHY_RULES>
-          - **Size:** Body text must be around 24px; Max size is 60px. Use only: **20** (for tiny), **22, 24, 26** (for body, e.g., \`text-[24px]\`), **28, 32, 36** (for headings), and **48, 60** (max hero, title).
-          - **Font Families (Select from):** Roboto, 'Open Sans', Lato, Montserrat, Oswald, 'Source Sans Pro', Raleway, 'PT Sans', Merriweather, 'Noto Sans', Poppins, 'Playfair Display', Lora, Inconsolata, monospace, Inter, Nunito, Quicksand, 'Bebas Neue', cursive, 'Josefin Sans', 'Fjalla One', 'Indie Flower', cursive, Pacifico, cursive, 'Shadows Into Light', cursive, Anton, 'Dancing Script', cursive.
-          - **Contrast:** Ensure strong contrast between headings and body.
-        </TYPOGRAPHY_RULES>
-      </CORE_DESIGN_RULES>
-      <NEW_THEME_CONTEXT>
-        - Theme name: ${newTheme.name}
-        - Theme colors: ${newTheme.colors.join(", ")}
-        - Theme prompt/instructions: ${newTheme.prompt}
-      </NEW_THEME_CONTEXT>
-      <INPUT_DATA>
-        <OLD_THEME_NAME>${oldTheme.name}</OLD_THEME_NAME>
-        <OLD_THEME_SLIDES>${JSON.stringify(
-          slidesWithPlaceholders.map((s) => ({ title: s.title, content: s.content }))
-        )}</OLD_THEME_SLIDES>
-      </INPUT_DATA>
-      <OUTPUT_FORMAT_RULE>
-        - OUTPUT: Valid JSON containing an array of slides: \`{ "slides": [{ "title": "...", "content": "..." }] }\`
-        - CONTENT: Pure HTML inside the JSON string. **No Markdown blocks (e.g., \`\`\`html\`) inside the "content" property.**
-      </OUTPUT_FORMAT_RULE>
-      <FINAL_INSTRUCTION>
-        Create designs that are production-ready and aesthetically astonishing. All elements must be contained within the 1920x1080 slide boundary.
-      </FINAL_INSTRUCTION>
+// --- STAGE 3: RESTYLE PROMPTS ---
+
+export const RESTYLE_SYSTEM_INSTRUCTION = `
+<INTRODUCTION>
+  You are a Presentation Design Expert. Your task is to apply a new visual theme to a set of slides while preserving the original content structure.
+  You are working in a **Continuous Session** to restyle a deck in batches.
+</INTRODUCTION>
+
+<SESSION_RULES>
+  1. **Consistency:** Maintain the new theme's aesthetics (fonts, colors, background) consistently across all batches.
+  2. **Content Preservation:** Do not lose text or data. You are rewriting the HTML structure/style to match the new theme, but the core information must remain.
+  3. **Output:** Return strictly valid JSON for the current batch.
+</SESSION_RULES>
+
+<IMPORTANT_IMAGE_RULE>
+  - The input HTML contains image placeholders (e.g., https://placeholder.img/global-id-X).
+  - **Preserve these placeholders** exactly in the new HTML unless you are explicitly replacing them with better *themed* AI visuals (only if the original had a descriptive alt).
+  - Do NOT change the URL if it's a placeholder for a user-uploaded image.
+</IMPORTANT_IMAGE_RULE>
+
+<CORE_DESIGN_RULES>
+  <VISUAL_COMPOSITION>
+    - **Slide Canvas:** Fixed 1920x1080 pixels.
+    - **Root Container:** \`<div class="relative w-[1920px] h-[1080px] overflow-hidden ...">\`.
+    - **Positioning:** Use \`absolute\` positioning for large-scale elements and complex overlays including sections and cards. Use **Flex/Grid** for content flow *within* cards and content blocks for better alignment.
+    - **Theme Application:** Apply the requested fonts, colors, and background styles aggressively.
+    - **Imagery:** Generate custom, symbolic visuals and images using \`https://gen.pollinations.ai/image/{modified_prompt_words_seperated_by_underscore}?model=flux\` (do not use generic stock imagery). Ensure using \`object-cover: obtain\` for images. And remember to include the 'alt' text for images.
+    - **Icons:** Use modern iconography from the Ionicons library via \`<ion-icon name="icon-name" class="..."></ion-icon>\`.
+    - **Depth:** Create depth using layering, shadows, and subtle background effects (gradients, patterns). Utilize whitespace effectively for focus and readability.
+    - **Modular Components:** Design elegant, reusable cards/containers with consistent styling (subtle box shadows, rounded corners, delicate borders).
+  </VISUAL_COMPOSITION>
+
+  <LAYOUT_RULES>
+    - **Layout Variation:** AVOID GENERIC TEMPLATES. Implement diverse, custom-polished layouts (Splits, Grids, Hero, Big Number, Complex Overlays) with dynamic, immersive backgrounds.
+    - **Data & Graphics:** When presenting charts, respond using a '<quickchart>' tag. Embed a valid Chart.js JSON config inside the 'config' attribute. Use professional, thematic colors. for example \`<quickchart config="{'type':'line','data': ...//continued_valid_chart_js_config_json}" alt="Capacity Growth Chart" class="w-[750px] h-[400px] object-contain" ></quickchart>\`
+    - **Image Overlays:** DO NOT use CSS blend-modes. For text legibility, use a semi-transparent div overlay. You are free to use advanced image manipulation (rotation, clipped shapes, unique positioning).
+    - **Transparency Restriction (CRITICAL):** You are **FORBIDDEN** from using high-fidelity transparency effects such as Glass Morphism, Frost effects.
+    - **Do not create custom charts or drawings(arrows).** Use only images from Pollinations or QuickChart for visuals.
+    - **No Collisions:** Ensur  e sufficient spacing/padding.
+  </LAYOUT_RULES>
+
+  <TYPOGRAPHY_RULES>
+    - **Size:** Body text must be around 24px; Max size is 60px. Use only: **20** (for tiny), **22, 24, 26** (for body, e.g., \`text-[24px]\`), **28, 32, 36** (for headings), and **48, 60** (max hero, title).
+    - **Font Families (Select from):** Roboto, 'Open Sans', Lato, Montserrat, Oswald, 'Source Sans Pro', Raleway, 'PT Sans', Merriweather, 'Noto Sans', Poppins, 'Playfair Display', Lora, Inconsolata, monospace, Inter, Nunito, Quicksand, 'Bebas Neue', cursive, 'Josefin Sans', 'Fjalla One', 'Indie Flower', cursive, Pacifico, cursive, 'Shadows Into Light', cursive, Anton, 'Dancing Script', cursive.
+    - **Contrast:** Ensure strong contrast between headings and body.
+  </TYPOGRAPHY_RULES>
+</CORE_DESIGN_RULES>
+
+<OUTPUT_FORMAT_RULE>
+   - OUTPUT: Valid JSON containing an array of slides for the **CURRENT BATCH ONLY**: \`{ "slides": [{ "title": "...", "content": "..." }] }\`
+   - CONTENT: Pure HTML inside the JSON string. **No Markdown blocks (e.g., \`\`\`html\`) inside the "content" property.**
+</OUTPUT_FORMAT_RULE>
 `;
 
+export const getRestyleFirstBatchPrompt = (newTheme: Theme, oldTheme: Theme, batchSlides: any[]) => `
+<TASK_CONTEXT>
+  You are applying a new theme to a presentation.
+  
+  **New Theme Identity:**
+  - Name: ${newTheme.name}
+  - Colors: ${newTheme.colors.join(", ")}
+  - Vibe/Instructions: ${newTheme.prompt}
+
+  **Old Theme Name:** ${oldTheme.name}
+</TASK_CONTEXT>
+
+<CURRENT_TASK>
+  Restyle the following slides (Batch 1).
+  Input Data:
+  ${JSON.stringify(batchSlides.map((s) => ({ title: s.title, content: s.content })))}
+</CURRENT_TASK>
+`;
+
+export const getRestyleNextBatchPrompt = (batchSlides: any[]) => `
+<CURRENT_TASK>
+  Restyle the next batch of slides.
+  Input Data:
+  ${JSON.stringify(batchSlides.map((s) => ({ title: s.title, content: s.content })))}
+</CURRENT_TASK>
+
+<CONSTRAINT>
+  Maintain strict visual consistency with the previous slides you just generated.
+</CONSTRAINT>
+`;
 export const getRefineTextPrompt = (text: string, action: "expand" | "condense" | "rewrite" | "tone") => {
     const actions = {
         expand: "Make longer and more descriptive",
